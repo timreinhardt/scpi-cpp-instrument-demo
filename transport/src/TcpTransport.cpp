@@ -2,13 +2,20 @@
 
 #include <netdb.h>
 #include <unistd.h>
-
+#include <sys/time.h>
 #include <cstring>
 #include <stdexcept>
+
 
 TcpTransport::TcpTransport(const std::string& host, int port)
     : host_(host), port_(port) {}
 
+TcpTransport::~TcpTransport() {
+    if (sockfd_ >= 0) {
+        close(sockfd_);
+        sockfd_ = -1;
+    }
+}
 bool TcpTransport::connectToTarget() {
     struct addrinfo hints {};
     struct addrinfo* result = nullptr;

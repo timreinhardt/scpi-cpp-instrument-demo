@@ -7,6 +7,7 @@
 class TcpTransport : public ITransport {
 public:
     TcpTransport(const std::string& host, int port);
+    ~TcpTransport() override;
 
     bool connectToTarget() override;
     std::string sendCommand(const std::string& command) override;
