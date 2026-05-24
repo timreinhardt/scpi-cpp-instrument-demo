@@ -88,8 +88,8 @@ void MainWindow::setupUi()
     // Live trace controls
     // -----------------------------------------------------
 
-    startLiveButton_ = new QPushButton("Start Live Trace");
-    stopLiveButton_ = new QPushButton("Stop Live Trace");
+    startLiveButton_ = new QPushButton("Start Live Acquisition");
+    stopLiveButton_ = new QPushButton("Stop Live Acquisition");
 
     pollTimer_ = new QTimer(this);
     pollTimer_->setInterval(500);
@@ -353,7 +353,7 @@ void MainWindow::startLiveTrace()
     }
 
     logToConsole("----------------------------------------");
-    logToConsole("Starting live trace polling every 500 ms");
+    logToConsole("Starting live acquisition every 500 ms");
 
     pollTimer_->start();
 
@@ -364,7 +364,7 @@ void MainWindow::startLiveTrace()
 void MainWindow::stopLiveTrace()
 {
     logToConsole("----------------------------------------");
-    logToConsole("Stopping live trace polling");
+    logToConsole("Stopping live acquisition");
 
     pollTimer_->stop();
 
@@ -376,7 +376,7 @@ void MainWindow::pollTraceData()
 {
     if (!client_)
     {
-        logToConsole("ERROR: Live poll attempted while disconnected");
+        logToConsole("ERROR: Live acquisition attempted while disconnected");
 
         pollTimer_->stop();
         updateConnectionState(false);
@@ -386,28 +386,64 @@ void MainWindow::pollTraceData()
 
     try
     {
-        std::string response = client_->query(":TRAC:DATA?");
+        // -------------------------------------------------
+        // Poll 1D spectrum trace
+        // -------------------------------------------------
 
-        auto values = parseTraceCsv(response);
+        std::string traceResponse = client_->query(":TRAC:DATA?");
+
+        auto values = parseTraceCsv(traceResponse);
         auto summary = summarizeTraceData(values);
 
         traceGraphLabel_->show();
         traceWidget_->show();
         traceWidget_->setTraceData(values);
 
+        // -------------------------------------------------
+        // Poll 2D field grid / heatmap
+        // -------------------------------------------------
+
+        std::string gridResponse = client_->query(":FIELD:GRID?");
+
+        auto grid = parseFieldGrid(gridResponse);
+
+        heatmapLabel_->show();
+        heatmapWidget_->show();
+        heatmapWidget_->setGridData(grid);
+
+        // -------------------------------------------------
+        // Human-readable status output
+        // -------------------------------------------------
+
         responseBox_->setText(
-            QString::fromStdString(formatTraceSummary(summary, values))
+            QString("Live Acquisition Summary\n"
+                    "Trace points: %1\n"
+                    "Trace min: %2 dBm\n"
+                    "Trace max: %3 dBm\n"
+                    "Trace avg: %4 dBm\n"
+                    "Field rows: %5\n"
+                    "Field cols: %6")
+                .arg(summary.pointCount)
+                .arg(summary.minValue, 0, 'f', 2)
+                .arg(summary.maxValue, 0, 'f', 2)
+                .arg(summary.averageValue, 0, 'f', 2)
+                .arg(fieldGridRows(grid))
+                .arg(fieldGridCols(grid))
         );
 
         logToConsole(
-            "Live trace update received: " +
+            "Live acquisition update received: " +
             QString::number(summary.pointCount) +
-            " points"
+            " trace points, " +
+            QString::number(fieldGridRows(grid)) +
+            "x" +
+            QString::number(fieldGridCols(grid)) +
+            " field grid"
         );
     }
     catch (const std::exception& ex)
     {
-        QString error = QString("LIVE TRACE ERROR: ") + ex.what();
+        QString error = QString("LIVE ACQUISITION ERROR: ") + ex.what();
 
         logToConsole(error);
         responseBox_->setText(error);
