@@ -33,6 +33,7 @@ MainWindow::MainWindow(QWidget *parent)
 void MainWindow::setupUi()
 {
     traceWidget_ = new TraceWidget();
+    traceWidget_->hide();
     setWindowTitle("SCPI C++ Instrument Demo");
 
     auto *layout = new QVBoxLayout(this);
@@ -64,13 +65,7 @@ void MainWindow::setupUi()
     pollTimer_ = new QTimer(this);
     pollTimer_->setInterval(500);
 
-    layout->addWidget(connectButton_);
-    layout->addWidget(disconnectButton_);
-    layout->addWidget(sendButton_);
-    layout->addWidget(startLiveButton_);
-    layout->addWidget(stopLiveButton_);
-    layout->addWidget(new QLabel("Trace Graph"));
-    layout->addWidget(traceWidget_);
+
     updateConnectionState(false);
 
     //sendButton_ = new QPushButton("Send Command");
@@ -91,8 +86,18 @@ void MainWindow::setupUi()
     layout->addWidget(new QLabel("SCPI Command"));
     layout->addWidget(commandSelect_);
     layout->addWidget(commandInput_);
-
+    layout->addWidget(connectButton_);
+    layout->addWidget(disconnectButton_);
     layout->addWidget(sendButton_);
+    layout->addWidget(startLiveButton_);
+    layout->addWidget(stopLiveButton_);
+    traceGraphLabel_ = new QLabel("Trace Graph");
+    traceGraphLabel_->hide();
+    traceWidget_->hide();
+
+    layout->addWidget(traceGraphLabel_);
+    layout->addWidget(traceWidget_);
+
 
     layout->addWidget(new QLabel("Response"));
     layout->addWidget(responseBox_);
@@ -249,6 +254,8 @@ void MainWindow::sendScpiCommand()
             auto values = parseTraceCsv(response);
             auto summary = summarizeTraceData(values);
             traceWidget_->setTraceData(values);
+            traceGraphLabel_->show();
+            traceWidget_->show();
             responseBox_->setText(
                 QString::fromStdString(formatTraceSummary(summary,values))
             );
@@ -324,6 +331,8 @@ void MainWindow::pollTraceData()
         auto values = parseTraceCsv(response);
         auto summary = summarizeTraceData(values);
         traceWidget_->setTraceData(values);
+        traceGraphLabel_->show();
+        traceWidget_->show();
         responseBox_->setText(
             QString::fromStdString(formatTraceSummary(summary, values))
         );

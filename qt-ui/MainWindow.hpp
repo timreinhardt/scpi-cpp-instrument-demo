@@ -9,6 +9,7 @@ class QTextEdit;
 class QComboBox;
 class QPushButton;
 class QTimer;
+class QLabel;
 
 #include "TcpTransport.hpp"
 #include "ScpiClient.hpp"
@@ -35,7 +36,7 @@ private:
     QLineEdit *hostInput_ = nullptr;
     QLineEdit *portInput_ = nullptr;
     QLineEdit *commandInput_ = nullptr;
-
+    QLabel *traceGraphLabel_ = nullptr;
     QComboBox *commandSelect_ = nullptr;
 
     QPushButton *connectButton_ = nullptr;

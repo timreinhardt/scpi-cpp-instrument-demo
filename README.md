@@ -1,14 +1,20 @@
 # SCPI C++ Instrument Demo
 
-Modular C++ instrument-control prototype using SCPI over TCP/IP sockets with transport abstraction and a mock spectrum-analyzer simulator.
+Modular C++ instrument-control prototype using SCPI over TCP/IP sockets with transport abstraction, live Qt visualization, and a Python mock spectrum-analyzer simulator.
 
-The project is intended as a learning/demo platform for:
-- SCPI instrument communication
-- TCP socket programming
-- C++ architecture layering
-- CMake-based builds
-- Qt desktop GUI integration
-- Instrumentation and test-equipment software concepts
+## Features
+
+- SCPI communication over TCP sockets
+- Persistent instrument connection
+- Modular transport abstraction layer
+- Qt6 desktop GUI
+- Live trace polling
+- CSV trace parsing into numeric vectors
+- Real-time trace statistics
+- Live 2D spectrum-style graph rendering
+- Mock Python SCPI instrument simulator
+
+---
 
 ## Architecture
 
@@ -26,84 +32,36 @@ TCP Socket
 Mock SCPI Instrument
 ```
 
-The backend transport and SCPI logic are separated so different communication methods can later be added such as:
-- Ethernet/TCP
-- Serial/COM
-- USB
-- VISA-style abstraction
-
 ---
 
-# Project Structure
+## Project Structure
 
 ```text
-core/
-    SCPI command logic
-
-transport/
-    Transport abstraction and TCP implementation
-
-ui/
-    Command-line interface
-
-qt-ui/
-    Qt Widgets desktop GUI
-
-mock/
-    Python mock SCPI instrument simulator
-
-scripts/
-    Build and clean scripts
+core/       SCPI logic and trace parsing/statistics
+transport/  Transport abstraction and TCP implementation
+qt-ui/      Qt GUI and live trace widget
+ui/         CLI interface
+mock/       Python SCPI instrument simulator
+scripts/    Build/configure/run scripts
 ```
 
 ---
 
-# Build System
+## Build Workflow
 
-This project uses:
-- CMake
-- C++17
-- Qt6 Widgets
-
-Builds are performed out-of-source into:
-
-```text
-build/
-```
-
----
-
-# Build Workflow
-
-## Full clean
-
-Removes all generated build files.
+Clean:
 
 ```bash
 ./scripts/clean.sh
 ```
 
----
-
-## Configure CMake + Qt
+Configure Qt + CMake:
 
 ```bash
 ./scripts/configure_qt.sh
 ```
 
-Equivalent conceptually to:
-
-```text
-CMakeLists.txt
-      ↓
-cmake
-      ↓
-generated Makefiles/build files
-```
-
----
-
-## Build
+Build:
 
 ```bash
 ./scripts/build.sh
@@ -118,7 +76,7 @@ build/scpi_cpp_qt_demo
 
 ---
 
-# Run Mock SCPI Instrument
+## Run Mock SCPI Instrument
 
 ```bash
 python3 mock/mock_scpi_server.py
@@ -130,7 +88,7 @@ Default:
 
 ---
 
-# Run CLI Version
+## Run CLI Demo
 
 ```bash
 ./build/scpi_cpp_demo localhost 5025 "*IDN?"
@@ -138,36 +96,60 @@ Default:
 
 ---
 
-# Run Qt GUI Version
+## Run Qt GUI
 
 ```bash
 ./build/scpi_cpp_qt_demo
 ```
 
-Then:
-- Host: localhost
-- Port: 5025
-- Command: *IDN?
+Example commands:
+- `*IDN?`
+- `:MEAS:VOLT?`
+- `:TRAC:DATA?`
 
-Press:
-Send Command
+---
 
-Expected response:
+## Live Trace Visualization
+
+The Qt GUI supports live polling, parsed trace statistics, and real-time spectrum-style plotting.
+
+Example summary:
 
 ```text
-YIC,MOCK-SPECTRUM-ANALYZER,MOCK12345,1.0
+Trace Summary
+Points: 51
+Min: -71.49 dBm
+Max: -44.74 dBm
+Avg: -63.86 dBm
 ```
 
 ---
 
-# Notes
+## Current Status
+
+Implemented:
+- SCPI TCP communication
+- Persistent connection handling
+- Qt GUI controls
+- Mock spectrum analyzer
+- Live polling timer
+- CSV trace parsing
+- Trace statistics
+- Live 2D graph rendering
+
+Planned:
+- Fixed dBm scaling
+- Grid/axis improvements
+- Waterfall visualization
+- Heatmap / field mapping
+- 3D visualization
+- Multi-trace overlays
+
+---
+
+## Notes
 
 - Developed on Apple Silicon macOS
 - Qt installed via Homebrew
-- Intended to later run cross-platform on:
-  - Windows
-  - Linux
-  - Embedded Linux/Raspberry Pi
-
-- Current Qt implementation is desktop-oriented.
-- Core transport and SCPI layers are platform-agnostic C++.
+- Intended to remain cross-platform
+- Core logic is platform-agnostic C++
