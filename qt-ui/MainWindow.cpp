@@ -4,6 +4,7 @@
 #include "TcpTransport.hpp"
 #include "TraceData.hpp"
 
+#include "TraceWidget.hpp"
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -31,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 void MainWindow::setupUi()
 {
+    traceWidget_ = new TraceWidget();
     setWindowTitle("SCPI C++ Instrument Demo");
 
     auto *layout = new QVBoxLayout(this);
@@ -67,7 +69,8 @@ void MainWindow::setupUi()
     layout->addWidget(sendButton_);
     layout->addWidget(startLiveButton_);
     layout->addWidget(stopLiveButton_);
-
+    layout->addWidget(new QLabel("Trace Graph"));
+    layout->addWidget(traceWidget_);
     updateConnectionState(false);
 
     //sendButton_ = new QPushButton("Send Command");
@@ -245,7 +248,7 @@ void MainWindow::sendScpiCommand()
         {
             auto values = parseTraceCsv(response);
             auto summary = summarizeTraceData(values);
-
+            traceWidget_->setTraceData(values);
             responseBox_->setText(
                 QString::fromStdString(formatTraceSummary(summary,values))
             );
@@ -320,7 +323,7 @@ void MainWindow::pollTraceData()
 
         auto values = parseTraceCsv(response);
         auto summary = summarizeTraceData(values);
-
+        traceWidget_->setTraceData(values);
         responseBox_->setText(
             QString::fromStdString(formatTraceSummary(summary, values))
         );

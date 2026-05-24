@@ -38,6 +38,7 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets)
 add_executable(scpi_cpp_qt_demo
     qt-ui/main_qt.cpp
     qt-ui/MainWindow.cpp
+    qt-ui/TraceWidget.cpp
     core/src/ScpiClient.cpp
     core/src/TraceData.cpp
     transport/src/TcpTransport.cpp

@@ -12,7 +12,7 @@ class QTimer;
 
 #include "TcpTransport.hpp"
 #include "ScpiClient.hpp"
-
+class TraceWidget;
 class MainWindow : public QWidget
 {
 public:
@@ -47,6 +47,7 @@ private:
     QTimer *pollTimer_ = nullptr;
 
     QTextEdit *responseBox_ = nullptr;
+    TraceWidget *traceWidget_ = nullptr;
     QTextEdit *consoleBox_ = nullptr;
 
     std::unique_ptr<TcpTransport> transport_;
