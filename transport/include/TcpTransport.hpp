@@ -12,6 +12,9 @@ public:
     bool connectToTarget() override;
     std::string sendCommand(const std::string& command) override;
 
+    void disconnect();
+    bool isConnected() const;
+
 private:
     std::string host_;
     int port_;

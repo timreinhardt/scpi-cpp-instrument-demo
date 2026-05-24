@@ -50,6 +50,17 @@ void MainWindow::setupUi()
     commandSelect_->addItem("Custom text command", "");
 
     commandInput_ = new QLineEdit("*IDN?");
+
+    connectButton_ = new QPushButton("Connect");
+    disconnectButton_ = new QPushButton("Disconnect");
+    sendButton_ = new QPushButton("Send Command");
+
+    layout->addWidget(connectButton_);
+    layout->addWidget(disconnectButton_);
+    layout->addWidget(sendButton_);
+
+    updateConnectionState(false);
+
     sendButton_ = new QPushButton("Send Command");
 
     responseBox_ = new QTextEdit();
@@ -85,8 +96,70 @@ void MainWindow::connectSignals()
     connect(commandSelect_, &QComboBox::currentIndexChanged,
             this, &MainWindow::syncCommandFromDropdown);
 
+    connect(connectButton_, &QPushButton::clicked,
+            this, &MainWindow::connectToInstrument);
+
+    connect(disconnectButton_, &QPushButton::clicked,
+            this, &MainWindow::disconnectFromInstrument);
+
     connect(sendButton_, &QPushButton::clicked,
             this, &MainWindow::sendScpiCommand);
+}
+void MainWindow::connectToInstrument()
+{
+    QString hostQ = hostInput_->text();
+    QString portQ = portInput_->text();
+
+    logToConsole("----------------------------------------");
+    logToConsole("Connect button clicked");
+    logToConsole("Host: " + hostQ);
+    logToConsole("Port: " + portQ);
+
+    try
+    {
+        std::string host = hostQ.toStdString();
+        int port = portQ.toInt();
+
+        transport_ = std::make_unique<TcpTransport>(host, port);
+        transport_->connectToTarget();
+
+        client_ = std::make_unique<ScpiClient>(std::move(transport_));
+
+        logToConsole("Connected to instrument");
+        updateConnectionState(true);
+    }
+    catch (const std::exception& ex)
+    {
+        QString error = QString("CONNECT ERROR: ") + ex.what();
+        logToConsole(error);
+        responseBox_->setText(error);
+
+        client_.reset();
+        transport_.reset();
+        updateConnectionState(false);
+    }
+}
+
+void MainWindow::disconnectFromInstrument()
+{
+    logToConsole("----------------------------------------");
+    logToConsole("Disconnect button clicked");
+
+    client_.reset();
+    transport_.reset();
+
+    logToConsole("Disconnected");
+    updateConnectionState(false);
+}
+
+void MainWindow::updateConnectionState(bool connected)
+{
+    connectButton_->setEnabled(!connected);
+    disconnectButton_->setEnabled(connected);
+    sendButton_->setEnabled(connected);
+
+    hostInput_->setEnabled(!connected);
+    portInput_->setEnabled(!connected);
 }
 
 void MainWindow::logToConsole(const QString& message)
@@ -112,6 +185,13 @@ void MainWindow::syncCommandFromDropdown(int index)
 
 void MainWindow::sendScpiCommand()
 {
+    if (!client_)
+    {
+        responseBox_->setText("ERROR: Not connected");
+        logToConsole("ERROR: Send attempted while not connected");
+        return;
+    }
+
     sendButton_->setEnabled(false);
     sendButton_->setText("Sending...");
     QCoreApplication::processEvents();
@@ -119,30 +199,18 @@ void MainWindow::sendScpiCommand()
     QElapsedTimer timer;
     timer.start();
 
-    QString hostQ = hostInput_->text();
-    QString portQ = portInput_->text();
     QString commandQ = commandInput_->text();
 
     logToConsole("----------------------------------------");
     logToConsole("Send button clicked");
-    logToConsole("Host: " + hostQ);
-    logToConsole("Port: " + portQ);
     logToConsole("Command: " + commandQ);
 
     try
     {
-        std::string host = hostQ.toStdString();
-        int port = portQ.toInt();
         std::string command = commandQ.toStdString();
 
-        logToConsole("Creating TcpTransport");
-        auto transport = std::make_unique<TcpTransport>(host, port);
-
-        logToConsole("Creating ScpiClient");
-        ScpiClient client(std::move(transport));
-
         logToConsole("Sending SCPI query...");
-        std::string response = client.query(command);
+        std::string response = client_->query(command);
 
         logToConsole("Response received");
         logToConsole("Elapsed ms: " + QString::number(timer.elapsed()));
@@ -157,8 +225,15 @@ void MainWindow::sendScpiCommand()
         logToConsole("Elapsed ms: " + QString::number(timer.elapsed()));
 
         responseBox_->setText(error);
+
+        client_.reset();
+        transport_.reset();
+        updateConnectionState(false);
     }
 
-    sendButton_->setText("Send Command");
-    sendButton_->setEnabled(true);
+    if (client_)
+    {
+        sendButton_->setText("Send Command");
+        sendButton_->setEnabled(true);
+    }
 }

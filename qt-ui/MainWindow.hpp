@@ -2,10 +2,15 @@
 
 #include <QWidget>
 
+#include <memory>
+
 class QLineEdit;
 class QTextEdit;
 class QComboBox;
 class QPushButton;
+
+#include "TcpTransport.hpp"
+#include "ScpiClient.hpp"
 
 class MainWindow : public QWidget
 {
@@ -16,16 +21,26 @@ private:
     void setupUi();
     void connectSignals();
     void logToConsole(const QString& message);
+
+    void connectToInstrument();
+    void disconnectFromInstrument();
     void sendScpiCommand();
     void syncCommandFromDropdown(int index);
+    void updateConnectionState(bool connected);
 
     QLineEdit *hostInput_ = nullptr;
     QLineEdit *portInput_ = nullptr;
     QLineEdit *commandInput_ = nullptr;
 
     QComboBox *commandSelect_ = nullptr;
+
+    QPushButton *connectButton_ = nullptr;
+    QPushButton *disconnectButton_ = nullptr;
     QPushButton *sendButton_ = nullptr;
 
     QTextEdit *responseBox_ = nullptr;
     QTextEdit *consoleBox_ = nullptr;
+
+    std::unique_ptr<TcpTransport> transport_;
+    std::unique_ptr<ScpiClient> client_;
 };
