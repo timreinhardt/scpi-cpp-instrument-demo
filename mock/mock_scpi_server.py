@@ -27,6 +27,29 @@ def fake_trace_data():
 
     return ",".join(values)
 
+def fake_field_grid():
+    rows = []
+
+    for y in range(20):
+        cols = []
+
+        for x in range(20):
+
+            # Fake hotspot near centre
+            dx = x - 10
+            dy = y - 10
+
+            distance = math.sqrt(dx * dx + dy * dy)
+
+            power = -80 + (35 * math.exp(-0.15 * distance * distance))
+
+            noise = random.uniform(-2.0, 2.0)
+
+            cols.append(f"{power + noise:.2f}")
+
+        rows.append(",".join(cols))
+
+    return ";".join(rows)
 
 def handle_command(command):
     cmd = command.strip().upper()
@@ -57,7 +80,10 @@ def handle_command(command):
 
     if cmd == ":TRAC:DATA?":
         return fake_trace_data()
-
+    
+    if cmd == ":FIELD:GRID?":
+        return fake_field_grid()
+    
     if cmd == ":SYST:ERR?":
         return "0,No error"
 

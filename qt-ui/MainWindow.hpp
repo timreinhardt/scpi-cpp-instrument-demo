@@ -10,6 +10,7 @@ class QComboBox;
 class QPushButton;
 class QTimer;
 class QLabel;
+class HeatmapWidget;
 
 #include "TcpTransport.hpp"
 #include "ScpiClient.hpp"
@@ -50,7 +51,8 @@ private:
     QTextEdit *responseBox_ = nullptr;
     TraceWidget *traceWidget_ = nullptr;
     QTextEdit *consoleBox_ = nullptr;
-
+    HeatmapWidget *heatmapWidget_ = nullptr;
+    QLabel *heatmapLabel_ = nullptr;
     std::unique_ptr<TcpTransport> transport_;
     std::unique_ptr<ScpiClient> client_;
 };

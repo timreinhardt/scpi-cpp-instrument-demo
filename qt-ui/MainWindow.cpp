@@ -1,24 +1,26 @@
 #include "MainWindow.hpp"
 
+#include "FieldGrid.hpp"
+#include "HeatmapWidget.hpp"
 #include "ScpiClient.hpp"
 #include "TcpTransport.hpp"
 #include "TraceData.hpp"
-
 #include "TraceWidget.hpp"
-#include <QVBoxLayout>
+
+#include <QComboBox>
+#include <QCoreApplication>
+#include <QDateTime>
+#include <QElapsedTimer>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QTextEdit>
-#include <QComboBox>
-#include <QDateTime>
-#include <QElapsedTimer>
-#include <QCoreApplication>
 #include <QTimer>
+#include <QVBoxLayout>
 
+#include <exception>
 #include <memory>
 #include <string>
-#include <exception>
 
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent)
@@ -32,16 +34,35 @@ MainWindow::MainWindow(QWidget *parent)
 
 void MainWindow::setupUi()
 {
-    traceWidget_ = new TraceWidget();
-    traceWidget_->hide();
     setWindowTitle("SCPI C++ Instrument Demo");
 
     auto *layout = new QVBoxLayout(this);
 
+    // -----------------------------------------------------
+    // Connection controls
+    // -----------------------------------------------------
+
     hostInput_ = new QLineEdit("localhost");
     portInput_ = new QLineEdit("5025");
 
+    connectButton_ = new QPushButton("Connect");
+    disconnectButton_ = new QPushButton("Disconnect");
+
+    layout->addWidget(new QLabel("Host"));
+    layout->addWidget(hostInput_);
+
+    layout->addWidget(new QLabel("Port"));
+    layout->addWidget(portInput_);
+
+    layout->addWidget(connectButton_);
+    layout->addWidget(disconnectButton_);
+
+    // -----------------------------------------------------
+    // SCPI command controls
+    // -----------------------------------------------------
+
     commandSelect_ = new QComboBox();
+
     commandSelect_->addItem("*IDN? - Identify instrument", "*IDN?");
     commandSelect_->addItem(":MEAS:VOLT? - Read voltage", ":MEAS:VOLT?");
     commandSelect_->addItem(":MEAS:CURR? - Read current", ":MEAS:CURR?");
@@ -51,24 +72,60 @@ void MainWindow::setupUi()
     commandSelect_->addItem(":FREQ:SPAN 100000000 - Set span", ":FREQ:SPAN 100000000");
     commandSelect_->addItem(":INIT - Start sweep/acquisition", ":INIT");
     commandSelect_->addItem(":TRAC:DATA? - Get fake trace data", ":TRAC:DATA?");
+    commandSelect_->addItem(":FIELD:GRID? - Get fake field grid", ":FIELD:GRID?");
     commandSelect_->addItem(":SYST:ERR? - Query error queue", ":SYST:ERR?");
     commandSelect_->addItem("Custom text command", "");
 
     commandInput_ = new QLineEdit("*IDN?");
-
-    connectButton_ = new QPushButton("Connect");
-    disconnectButton_ = new QPushButton("Disconnect");
     sendButton_ = new QPushButton("Send Command");
+
+    layout->addWidget(new QLabel("SCPI Command"));
+    layout->addWidget(commandSelect_);
+    layout->addWidget(commandInput_);
+    layout->addWidget(sendButton_);
+
+    // -----------------------------------------------------
+    // Live trace controls
+    // -----------------------------------------------------
+
     startLiveButton_ = new QPushButton("Start Live Trace");
     stopLiveButton_ = new QPushButton("Stop Live Trace");
 
     pollTimer_ = new QTimer(this);
     pollTimer_->setInterval(500);
 
+    layout->addWidget(startLiveButton_);
+    layout->addWidget(stopLiveButton_);
 
-    updateConnectionState(false);
+    // -----------------------------------------------------
+    // Trace graph
+    // -----------------------------------------------------
 
-    //sendButton_ = new QPushButton("Send Command");
+    traceGraphLabel_ = new QLabel("Trace Graph");
+    traceWidget_ = new TraceWidget();
+
+    traceGraphLabel_->hide();
+    traceWidget_->hide();
+
+    layout->addWidget(traceGraphLabel_);
+    layout->addWidget(traceWidget_);
+
+    // -----------------------------------------------------
+    // Field heatmap
+    // -----------------------------------------------------
+
+    heatmapLabel_ = new QLabel("Field Heatmap");
+    heatmapWidget_ = new HeatmapWidget();
+
+    heatmapLabel_->hide();
+    heatmapWidget_->hide();
+
+    layout->addWidget(heatmapLabel_);
+    layout->addWidget(heatmapWidget_);
+
+    // -----------------------------------------------------
+    // Response and debug output
+    // -----------------------------------------------------
 
     responseBox_ = new QTextEdit();
     responseBox_->setReadOnly(true);
@@ -77,35 +134,15 @@ void MainWindow::setupUi()
     consoleBox_->setReadOnly(true);
     consoleBox_->setMinimumHeight(140);
 
-    layout->addWidget(new QLabel("Host"));
-    layout->addWidget(hostInput_);
-
-    layout->addWidget(new QLabel("Port"));
-    layout->addWidget(portInput_);
-
-    layout->addWidget(new QLabel("SCPI Command"));
-    layout->addWidget(commandSelect_);
-    layout->addWidget(commandInput_);
-    layout->addWidget(connectButton_);
-    layout->addWidget(disconnectButton_);
-    layout->addWidget(sendButton_);
-    layout->addWidget(startLiveButton_);
-    layout->addWidget(stopLiveButton_);
-    traceGraphLabel_ = new QLabel("Trace Graph");
-    traceGraphLabel_->hide();
-    traceWidget_->hide();
-
-    layout->addWidget(traceGraphLabel_);
-    layout->addWidget(traceWidget_);
-
-
     layout->addWidget(new QLabel("Response"));
     layout->addWidget(responseBox_);
 
     layout->addWidget(new QLabel("Debug Console"));
     layout->addWidget(consoleBox_);
 
-    resize(620, 620);
+    updateConnectionState(false);
+
+    resize(760, 900);
 }
 
 void MainWindow::connectSignals()
@@ -123,14 +160,15 @@ void MainWindow::connectSignals()
             this, &MainWindow::sendScpiCommand);
 
     connect(startLiveButton_, &QPushButton::clicked,
-        this, &MainWindow::startLiveTrace);
+            this, &MainWindow::startLiveTrace);
 
     connect(stopLiveButton_, &QPushButton::clicked,
-        this, &MainWindow::stopLiveTrace);
+            this, &MainWindow::stopLiveTrace);
 
     connect(pollTimer_, &QTimer::timeout,
-        this, &MainWindow::pollTraceData);
+            this, &MainWindow::pollTraceData);
 }
+
 void MainWindow::connectToInstrument()
 {
     QString hostQ = hostInput_->text();
@@ -157,11 +195,13 @@ void MainWindow::connectToInstrument()
     catch (const std::exception& ex)
     {
         QString error = QString("CONNECT ERROR: ") + ex.what();
+
         logToConsole(error);
         responseBox_->setText(error);
 
         client_.reset();
         transport_.reset();
+
         updateConnectionState(false);
     }
 }
@@ -187,8 +227,8 @@ void MainWindow::updateConnectionState(bool connected)
 {
     connectButton_->setEnabled(!connected);
     disconnectButton_->setEnabled(connected);
-    sendButton_->setEnabled(connected);
 
+    sendButton_->setEnabled(connected);
     startLiveButton_->setEnabled(connected);
     stopLiveButton_->setEnabled(false);
 
@@ -253,11 +293,27 @@ void MainWindow::sendScpiCommand()
         {
             auto values = parseTraceCsv(response);
             auto summary = summarizeTraceData(values);
-            traceWidget_->setTraceData(values);
+
             traceGraphLabel_->show();
             traceWidget_->show();
+            traceWidget_->setTraceData(values);
+
             responseBox_->setText(
-                QString::fromStdString(formatTraceSummary(summary,values))
+                QString::fromStdString(formatTraceSummary(summary, values))
+            );
+        }
+        else if (command == ":FIELD:GRID?")
+        {
+            auto grid = parseFieldGrid(response);
+
+            heatmapLabel_->show();
+            heatmapWidget_->show();
+            heatmapWidget_->setGridData(grid);
+
+            responseBox_->setText(
+                QString("Field Grid Summary\nRows: %1\nColumns: %2")
+                    .arg(fieldGridRows(grid))
+                    .arg(fieldGridCols(grid))
             );
         }
         else
@@ -276,6 +332,7 @@ void MainWindow::sendScpiCommand()
 
         client_.reset();
         transport_.reset();
+
         updateConnectionState(false);
     }
 
@@ -285,6 +342,7 @@ void MainWindow::sendScpiCommand()
         sendButton_->setEnabled(true);
     }
 }
+
 void MainWindow::startLiveTrace()
 {
     if (!client_)
@@ -319,8 +377,10 @@ void MainWindow::pollTraceData()
     if (!client_)
     {
         logToConsole("ERROR: Live poll attempted while disconnected");
+
         pollTimer_->stop();
         updateConnectionState(false);
+
         return;
     }
 
@@ -330,9 +390,11 @@ void MainWindow::pollTraceData()
 
         auto values = parseTraceCsv(response);
         auto summary = summarizeTraceData(values);
-        traceWidget_->setTraceData(values);
+
         traceGraphLabel_->show();
         traceWidget_->show();
+        traceWidget_->setTraceData(values);
+
         responseBox_->setText(
             QString::fromStdString(formatTraceSummary(summary, values))
         );
@@ -351,6 +413,7 @@ void MainWindow::pollTraceData()
         responseBox_->setText(error);
 
         pollTimer_->stop();
+
         client_.reset();
         transport_.reset();
 

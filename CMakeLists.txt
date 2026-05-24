@@ -3,12 +3,15 @@ cmake_minimum_required(VERSION 3.16)
 project(scpi_cpp_instrument_demo LANGUAGES CXX)
 
 # =====================================================
-# C++ Standard
+# C++ / CMake Settings
 # =====================================================
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Helps VS Code / IntelliSense understand include paths and compile flags.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # =====================================================
 # CLI Executable
 # =====================================================
@@ -17,6 +20,7 @@ add_executable(scpi_cpp_demo
     ui/main.cpp
     core/src/ScpiClient.cpp
     core/src/TraceData.cpp
+    core/src/FieldGrid.cpp
     transport/src/TcpTransport.cpp
 )
 
@@ -39,8 +43,10 @@ add_executable(scpi_cpp_qt_demo
     qt-ui/main_qt.cpp
     qt-ui/MainWindow.cpp
     qt-ui/TraceWidget.cpp
+    qt-ui/HeatmapWidget.cpp
     core/src/ScpiClient.cpp
     core/src/TraceData.cpp
+    core/src/FieldGrid.cpp
     transport/src/TcpTransport.cpp
 )
 
