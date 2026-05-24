@@ -40,6 +40,13 @@ void TraceWidget::setShowGrid(bool enabled)
     update();
 }
 
+void TraceWidget::setFrequencyRangeMHz(double startMHz, double stopMHz)
+{
+    startFreqMHz_ = startMHz;
+    stopFreqMHz_ = stopMHz;
+    update();
+}
+
 void TraceWidget::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
@@ -82,10 +89,8 @@ void TraceWidget::paintEvent(QPaintEvent *event)
             double x = plotArea.left() +
                        (plotArea.width() * i / verticalLines);
 
-            painter.drawLine(
-                QPointF(x, plotArea.top()),
-                QPointF(x, plotArea.bottom())
-            );
+            painter.drawLine(QPointF(x, plotArea.top()),
+                             QPointF(x, plotArea.bottom()));
         }
 
         for (int i = 1; i < horizontalLines; ++i)
@@ -93,42 +98,47 @@ void TraceWidget::paintEvent(QPaintEvent *event)
             double y = plotArea.top() +
                        (plotArea.height() * i / horizontalLines);
 
-            painter.drawLine(
-                QPointF(plotArea.left(), y),
-                QPointF(plotArea.right(), y)
-            );
+            painter.drawLine(QPointF(plotArea.left(), y),
+                             QPointF(plotArea.right(), y));
         }
     }
 
     painter.setPen(QPen(QColor(210, 210, 210), 1));
-    painter.drawText(12, 22, "Power");
-    painter.drawText(18, 55, "(dBm)");
-    painter.drawText(width() / 2 - 50, height() - 12, "Sample Index");
+
+    painter.drawText(12, 32, "Power");
+    painter.drawText(18, 48, "(dBm)");
+    painter.drawText(width() / 2 - 58, height() - 12, "Frequency (MHz)");
 
     painter.drawText(
-        8,
+        18,
         static_cast<int>(plotArea.top() + 5),
         QString::number(maxVal, 'f', 1)
     );
 
     painter.drawText(
-        8,
+        18,
         static_cast<int>(plotArea.bottom()),
         QString::number(minVal, 'f', 1)
     );
 
+    double midFreqMHz = (startFreqMHz_ + stopFreqMHz_) / 2.0;
+
     painter.drawText(
-        static_cast<int>(plotArea.left()),
+        static_cast<int>(plotArea.left()) - 10,
         height() - 28,
-        "0"
+        QString::number(startFreqMHz_, 'f', 0)
     );
 
     painter.drawText(
-        static_cast<int>(plotArea.right()) - 35,
+        static_cast<int>(plotArea.center().x()) - 18,
         height() - 28,
-        traceData_.empty()
-            ? "N"
-            : QString::number(traceData_.size() - 1)
+        QString::number(midFreqMHz, 'f', 0)
+    );
+
+    painter.drawText(
+        static_cast<int>(plotArea.right()) - 30,
+        height() - 28,
+        QString::number(stopFreqMHz_, 'f', 0)
     );
 
     if (traceData_.size() < 2)
@@ -194,5 +204,13 @@ void TraceWidget::paintEvent(QPaintEvent *event)
         static_cast<int>(plotArea.left() + 8),
         static_cast<int>(plotArea.top() + 36),
         QString("Points: %1").arg(traceData_.size())
+    );
+
+    painter.drawText(
+        static_cast<int>(plotArea.left() + 8),
+        static_cast<int>(plotArea.top() + 54),
+        QString("Span: %1-%2 MHz")
+            .arg(startFreqMHz_, 0, 'f', 0)
+            .arg(stopFreqMHz_, 0, 'f', 0)
     );
 }
