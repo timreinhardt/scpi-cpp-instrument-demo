@@ -16,6 +16,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(scpi_cpp_demo
     ui/main.cpp
     core/src/ScpiClient.cpp
+    core/src/TraceData.cpp
     transport/src/TcpTransport.cpp
 )
 
@@ -38,6 +39,7 @@ add_executable(scpi_cpp_qt_demo
     qt-ui/main_qt.cpp
     qt-ui/MainWindow.cpp
     core/src/ScpiClient.cpp
+    core/src/TraceData.cpp
     transport/src/TcpTransport.cpp
 )
 

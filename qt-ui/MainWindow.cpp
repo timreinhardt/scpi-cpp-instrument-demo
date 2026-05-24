@@ -2,6 +2,7 @@
 
 #include "ScpiClient.hpp"
 #include "TcpTransport.hpp"
+#include "TraceData.hpp"
 
 #include <QVBoxLayout>
 #include <QLabel>
@@ -240,7 +241,19 @@ void MainWindow::sendScpiCommand()
         logToConsole("Response received");
         logToConsole("Elapsed ms: " + QString::number(timer.elapsed()));
 
-        responseBox_->setText(QString::fromStdString(response));
+        if (command == ":TRAC:DATA?")
+        {
+            auto values = parseTraceCsv(response);
+            auto summary = summarizeTraceData(values);
+
+            responseBox_->setText(
+                QString::fromStdString(formatTraceSummary(summary))
+            );
+        }
+        else
+        {
+            responseBox_->setText(QString::fromStdString(response));
+        }
     }
     catch (const std::exception& ex)
     {
@@ -305,9 +318,18 @@ void MainWindow::pollTraceData()
     {
         std::string response = client_->query(":TRAC:DATA?");
 
-        responseBox_->setText(QString::fromStdString(response));
+        auto values = parseTraceCsv(response);
+        auto summary = summarizeTraceData(values);
 
-        logToConsole("Live trace update received");
+        responseBox_->setText(
+            QString::fromStdString(formatTraceSummary(summary))
+        );
+
+        logToConsole(
+            "Live trace update received: " +
+            QString::number(summary.pointCount) +
+            " points"
+        );
     }
     catch (const std::exception& ex)
     {
