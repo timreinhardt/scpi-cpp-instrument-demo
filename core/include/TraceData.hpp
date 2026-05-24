@@ -12,4 +12,5 @@ struct TraceSummary {
 
 std::vector<double> parseTraceCsv(const std::string& csv);
 TraceSummary summarizeTraceData(const std::vector<double>& values);
-std::string formatTraceSummary(const TraceSummary& summary);
+std::string formatTraceSummary(const TraceSummary& summary,
+                               const std::vector<double>& values);

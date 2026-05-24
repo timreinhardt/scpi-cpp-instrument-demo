@@ -247,7 +247,7 @@ void MainWindow::sendScpiCommand()
             auto summary = summarizeTraceData(values);
 
             responseBox_->setText(
-                QString::fromStdString(formatTraceSummary(summary))
+                QString::fromStdString(formatTraceSummary(summary,values))
             );
         }
         else
@@ -322,7 +322,7 @@ void MainWindow::pollTraceData()
         auto summary = summarizeTraceData(values);
 
         responseBox_->setText(
-            QString::fromStdString(formatTraceSummary(summary))
+            QString::fromStdString(formatTraceSummary(summary, values))
         );
 
         logToConsole(

@@ -65,7 +65,8 @@ TraceSummary summarizeTraceData(const std::vector<double>& values)
     return summary;
 }
 
-std::string formatTraceSummary(const TraceSummary& summary)
+std::string formatTraceSummary(const TraceSummary& summary,
+                               const std::vector<double>& values)
 {
     std::ostringstream out;
 
@@ -73,7 +74,25 @@ std::string formatTraceSummary(const TraceSummary& summary)
     out << "Points: " << summary.pointCount << "\n";
     out << "Min: " << summary.minValue << " dBm\n";
     out << "Max: " << summary.maxValue << " dBm\n";
-    out << "Avg: " << summary.averageValue << " dBm";
+    out << "Avg: " << summary.averageValue << " dBm\n";
+
+    if (!values.empty())
+    {
+        out << "\nSample Values\n";
+        out << "[1] = " << values.front() << " dBm\n";
+
+        if (values.size() >= 2)
+        {
+            out << "[2] = " << values[1] << " dBm\n";
+        }
+
+        if (values.size() > 2)
+        {
+            out << "...\n";
+            out << "[" << values.size() << "] = "
+                << values.back() << " dBm";
+        }
+    }
 
     return out.str();
 }
