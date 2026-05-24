@@ -8,6 +8,7 @@ class QLineEdit;
 class QTextEdit;
 class QComboBox;
 class QPushButton;
+class QTimer;
 
 #include "TcpTransport.hpp"
 #include "ScpiClient.hpp"
@@ -27,6 +28,9 @@ private:
     void sendScpiCommand();
     void syncCommandFromDropdown(int index);
     void updateConnectionState(bool connected);
+    void startLiveTrace();
+    void stopLiveTrace();
+    void pollTraceData();
 
     QLineEdit *hostInput_ = nullptr;
     QLineEdit *portInput_ = nullptr;
@@ -37,6 +41,10 @@ private:
     QPushButton *connectButton_ = nullptr;
     QPushButton *disconnectButton_ = nullptr;
     QPushButton *sendButton_ = nullptr;
+
+    QPushButton *startLiveButton_ = nullptr;
+    QPushButton *stopLiveButton_ = nullptr;
+    QTimer *pollTimer_ = nullptr;
 
     QTextEdit *responseBox_ = nullptr;
     QTextEdit *consoleBox_ = nullptr;

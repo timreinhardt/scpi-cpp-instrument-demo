@@ -12,6 +12,7 @@
 #include <QDateTime>
 #include <QElapsedTimer>
 #include <QCoreApplication>
+#include <QTimer>
 
 #include <memory>
 #include <string>
@@ -54,14 +55,21 @@ void MainWindow::setupUi()
     connectButton_ = new QPushButton("Connect");
     disconnectButton_ = new QPushButton("Disconnect");
     sendButton_ = new QPushButton("Send Command");
+    startLiveButton_ = new QPushButton("Start Live Trace");
+    stopLiveButton_ = new QPushButton("Stop Live Trace");
+
+    pollTimer_ = new QTimer(this);
+    pollTimer_->setInterval(500);
 
     layout->addWidget(connectButton_);
     layout->addWidget(disconnectButton_);
     layout->addWidget(sendButton_);
+    layout->addWidget(startLiveButton_);
+    layout->addWidget(stopLiveButton_);
 
     updateConnectionState(false);
 
-    sendButton_ = new QPushButton("Send Command");
+    //sendButton_ = new QPushButton("Send Command");
 
     responseBox_ = new QTextEdit();
     responseBox_->setReadOnly(true);
@@ -104,6 +112,15 @@ void MainWindow::connectSignals()
 
     connect(sendButton_, &QPushButton::clicked,
             this, &MainWindow::sendScpiCommand);
+
+    connect(startLiveButton_, &QPushButton::clicked,
+        this, &MainWindow::startLiveTrace);
+
+    connect(stopLiveButton_, &QPushButton::clicked,
+        this, &MainWindow::stopLiveTrace);
+
+    connect(pollTimer_, &QTimer::timeout,
+        this, &MainWindow::pollTraceData);
 }
 void MainWindow::connectToInstrument()
 {
@@ -145,6 +162,11 @@ void MainWindow::disconnectFromInstrument()
     logToConsole("----------------------------------------");
     logToConsole("Disconnect button clicked");
 
+    if (pollTimer_)
+    {
+        pollTimer_->stop();
+    }
+
     client_.reset();
     transport_.reset();
 
@@ -157,6 +179,9 @@ void MainWindow::updateConnectionState(bool connected)
     connectButton_->setEnabled(!connected);
     disconnectButton_->setEnabled(connected);
     sendButton_->setEnabled(connected);
+
+    startLiveButton_->setEnabled(connected);
+    stopLiveButton_->setEnabled(false);
 
     hostInput_->setEnabled(!connected);
     portInput_->setEnabled(!connected);
@@ -235,5 +260,66 @@ void MainWindow::sendScpiCommand()
     {
         sendButton_->setText("Send Command");
         sendButton_->setEnabled(true);
+    }
+}
+void MainWindow::startLiveTrace()
+{
+    if (!client_)
+    {
+        logToConsole("ERROR: Cannot start live trace while disconnected");
+        responseBox_->setText("ERROR: Not connected");
+        return;
+    }
+
+    logToConsole("----------------------------------------");
+    logToConsole("Starting live trace polling every 500 ms");
+
+    pollTimer_->start();
+
+    startLiveButton_->setEnabled(false);
+    stopLiveButton_->setEnabled(true);
+}
+
+void MainWindow::stopLiveTrace()
+{
+    logToConsole("----------------------------------------");
+    logToConsole("Stopping live trace polling");
+
+    pollTimer_->stop();
+
+    startLiveButton_->setEnabled(true);
+    stopLiveButton_->setEnabled(false);
+}
+
+void MainWindow::pollTraceData()
+{
+    if (!client_)
+    {
+        logToConsole("ERROR: Live poll attempted while disconnected");
+        pollTimer_->stop();
+        updateConnectionState(false);
+        return;
+    }
+
+    try
+    {
+        std::string response = client_->query(":TRAC:DATA?");
+
+        responseBox_->setText(QString::fromStdString(response));
+
+        logToConsole("Live trace update received");
+    }
+    catch (const std::exception& ex)
+    {
+        QString error = QString("LIVE TRACE ERROR: ") + ex.what();
+
+        logToConsole(error);
+        responseBox_->setText(error);
+
+        pollTimer_->stop();
+        client_.reset();
+        transport_.reset();
+
+        updateConnectionState(false);
     }
 }
