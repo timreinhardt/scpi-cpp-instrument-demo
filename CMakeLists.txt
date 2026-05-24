@@ -36,6 +36,7 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
 add_executable(scpi_cpp_qt_demo
     qt-ui/main_qt.cpp
+    qt-ui/MainWindow.cpp
     core/src/ScpiClient.cpp
     transport/src/TcpTransport.cpp
 )
@@ -43,6 +44,7 @@ add_executable(scpi_cpp_qt_demo
 target_include_directories(scpi_cpp_qt_demo PRIVATE
     core/include
     transport/include
+    qt-ui
 )
 
 target_link_libraries(scpi_cpp_qt_demo PRIVATE
