@@ -33,7 +33,17 @@ Modular C++ instrument-control prototype using SCPI over TCP/IP sockets with liv
 ![Response](screenshots/response.png)
 
 ---
+## Windows Package
 
+execute each:
+
+1. `mock_scpi_server.exe`
+2. `scpi_cpp_qt_demo.exe`
+
+Then connect to:
+
+- Host: localhost
+- Port: 5025
 ## Architecture
 
 ```text
