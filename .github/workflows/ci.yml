@@ -38,7 +38,30 @@ on:
 # =========================================================
 
 jobs:
+  # -------------------------------------------------------
+  # Windows  Job
+  # -------------------------------------------------------
+  build-windows:
+    runs-on: windows-latest
 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.6.3'
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_msvc2019_64'
+          modules: 'qtdatavis3d'
+
+      - name: Configure CMake
+        run: cmake -S . -B build -G "Visual Studio 17 2022"
+
+      - name: Build project
+        run: cmake --build build --config Release
   # -------------------------------------------------------
   # Ubuntu Build Job
   # -------------------------------------------------------
