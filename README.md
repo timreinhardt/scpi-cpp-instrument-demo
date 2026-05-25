@@ -127,23 +127,22 @@ Avg: -63.86 dBm
 
 ## Current Status
 
+## Current Status
+
 Implemented:
 - SCPI TCP communication
-- Persistent connection handling
-- Qt GUI controls
+- Qt GUI dashboard
 - Mock spectrum analyzer
-- Live polling timer
-- CSV trace parsing
-- Trace statistics
-- Live 2D graph rendering
+- Live acquisition system
+- 1D trace visualization
+- 2D RF heatmap
+- 3D RF surface mapping
 
-Planned:
-- Fixed dBm scaling
-- Grid/axis improvements
+Potential next steps:
 - Waterfall visualization
-- Heatmap / field mapping
-- 3D visualization
 - Multi-trace overlays
+- Real instrument integration
+- Data export/playback
 
 ---
 
