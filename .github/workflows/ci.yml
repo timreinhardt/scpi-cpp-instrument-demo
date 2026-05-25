@@ -105,18 +105,6 @@ jobs:
           pyinstaller --onefile mock\mock_scpi_server.py
           copy dist\mock_scpi_server.exe package\
 
-      # ---------------------------------------------------
-      # Create simple Windows launcher
-      # ---------------------------------------------------
-      #
-      # Opens mock server first, then the Qt GUI.
-      # User can close the mock server console or press Ctrl+C.
-      #
-
-      - name: Create launcher
-        run: |
-          echo start mock_scpi_server.exe > package\launch_demo.bat
-          echo start scpi_cpp_qt_demo.exe >> package\launch_demo.bat
 
       # ---------------------------------------------------
       # Upload downloadable Windows package
