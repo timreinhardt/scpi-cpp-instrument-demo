@@ -8,7 +8,7 @@ Modular C++ instrument-control prototype using SCPI over TCP/IP sockets with liv
 - Modular transport layer
 - Qt6 desktop GUI
 - Live acquisition
-- 1D trace visualization
+- Frequency/power plot
 - 2D RF heatmap
 - 3D RF surface mapping
 - Mock Python SCPI instrument
