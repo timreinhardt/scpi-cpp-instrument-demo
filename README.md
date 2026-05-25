@@ -14,6 +14,21 @@ Modular C++ instrument-control prototype using SCPI over TCP/IP sockets with tra
 - Live 2D spectrum-style graph rendering
 - Mock Python SCPI instrument simulator
 
+### Main Dashboard
+
+![Main Dashboard](screenshots/main.png)
+
+### Trace + Field Mapping
+
+![Trace And Field](screenshots/TraceAndField.png)
+
+### 3D RF Surface
+
+![3D Surface](screenshots/3D-surface.png)
+
+### SCPI Response / Console
+
+![Response](screenshots/response.png)
 ---
 
 ## Architecture
