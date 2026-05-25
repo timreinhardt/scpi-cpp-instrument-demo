@@ -1,18 +1,20 @@
 # SCPI C++ Instrument Demo
 
-Modular C++ instrument-control prototype using SCPI over TCP/IP sockets with transport abstraction, live Qt visualization, and a Python mock spectrum-analyzer simulator.
+Modular C++ instrument-control prototype using SCPI over TCP/IP sockets with live Qt visualization and a Python mock spectrum-analyzer simulator.
 
 ## Features
 
-- SCPI communication over TCP sockets
-- Persistent instrument connection
-- Modular transport abstraction layer
+- SCPI TCP communication
+- Modular transport layer
 - Qt6 desktop GUI
-- Live trace polling
-- CSV trace parsing into numeric vectors
-- Real-time trace statistics
-- Live 2D spectrum-style graph rendering
-- Mock Python SCPI instrument simulator
+- Live acquisition
+- 1D trace visualization
+- 2D RF heatmap
+- 3D RF surface mapping
+- Mock Python SCPI instrument
+- Linux + Windows CI builds
+
+## Screenshots
 
 ### Main Dashboard
 
@@ -29,6 +31,7 @@ Modular C++ instrument-control prototype using SCPI over TCP/IP sockets with tra
 ### SCPI Response / Console
 
 ![Response](screenshots/response.png)
+
 ---
 
 ## Architecture
@@ -52,17 +55,17 @@ Mock SCPI Instrument
 ## Project Structure
 
 ```text
-core/       SCPI logic and trace parsing/statistics
+core/       SCPI logic and parsing
 transport/  Transport abstraction and TCP implementation
-qt-ui/      Qt GUI and live trace widget
+qt-ui/      Qt GUI and visualization widgets
 ui/         CLI interface
 mock/       Python SCPI instrument simulator
-scripts/    Build/configure/run scripts
+scripts/    Build/configure scripts
 ```
 
 ---
 
-## Build Workflow
+## Build
 
 Clean:
 
@@ -70,7 +73,7 @@ Clean:
 ./scripts/clean.sh
 ```
 
-Configure Qt + CMake:
+Configure:
 
 ```bash
 ./scripts/configure_qt.sh
@@ -82,7 +85,7 @@ Build:
 ./scripts/build.sh
 ```
 
-Build outputs:
+Outputs:
 
 ```text
 build/scpi_cpp_demo
@@ -91,7 +94,7 @@ build/scpi_cpp_qt_demo
 
 ---
 
-## Run Mock SCPI Instrument
+## Run Mock Instrument
 
 ```bash
 python3 mock/mock_scpi_server.py
@@ -121,49 +124,27 @@ Example commands:
 - `*IDN?`
 - `:MEAS:VOLT?`
 - `:TRAC:DATA?`
+- `:FIELD:GRID?`
 
 ---
 
-## Live Trace Visualization
-
-The Qt GUI supports live polling, parsed trace statistics, and real-time spectrum-style plotting.
-
-Example summary:
-
-```text
-Trace Summary
-Points: 51
-Min: -71.49 dBm
-Max: -44.74 dBm
-Avg: -63.86 dBm
-```
-
----
-
-## Current Status
-
-## Current Status
-
-Implemented:
-- SCPI TCP communication
-- Qt GUI dashboard
-- Mock spectrum analyzer
-- Live acquisition system
-- 1D trace visualization
-- 2D RF heatmap
-- 3D RF surface mapping
-
-Potential next steps:
-- Waterfall visualization
-- Multi-trace overlays
-- Real instrument integration
-- Data export/playback
-
----
 
 ## Notes
 
 - Developed on Apple Silicon macOS
-- Qt installed via Homebrew
-- Intended to remain cross-platform
-- Core logic is platform-agnostic C++
+- Cross-platform CMake/Qt project
+- Linux + Windows CI builds via GitHub Actions
+
+## Apple Silicon Homebrew Note
+
+If macOS uses the wrong Homebrew/Qt path, run:
+
+```bash
+source ./scripts/use_arm_brew.sh
+```
+
+Expected:
+
+```text
+/opt/homebrew/bin/brew
+```
