@@ -2,51 +2,53 @@
 # GitHub Actions CI Workflow
 # =========================================================
 #
-# This workflow automatically builds the project
-# whenever code is pushed to GitHub.
+# Builds the project automatically on Linux and Windows.
 #
-# CI = Continuous Integration
+# Linux:
+#   Confirms the project builds cleanly with system Qt packages.
 #
-# GitHub creates a temporary Ubuntu machine,
-# installs dependencies, downloads the repo,
-# configures CMake, then builds the project.
+# Windows:
+#   Builds the Qt GUI using Visual Studio, packages the GUI
+#   executable with Qt runtime files, packages the Python mock
+#   server as an .exe, and uploads a downloadable artifact.
 #
 # File extension:
 #   .yml = YAML configuration format
 #
 # =========================================================
 
-# Workflow name shown in GitHub Actions UI
 name: CMake Qt CI
 
-# =========================================================
-# When should this workflow run?
-# =========================================================
-
 on:
-
-  # Run when code is pushed to main branch
   push:
     branches: [ main ]
 
-  # Also run for pull requests targeting main
   pull_request:
     branches: [ main ]
 
-# =========================================================
-# Jobs
-# =========================================================
-
 jobs:
-  # -------------------------------------------------------
-  # Windows  Job
-  # -------------------------------------------------------
+  # =======================================================
+  # Windows Build + Package Job
+  # =======================================================
+
   build-windows:
     runs-on: windows-latest
 
     steps:
+      # ---------------------------------------------------
+      # Download repository source code
+      # ---------------------------------------------------
+
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # ---------------------------------------------------
+      # Install Qt for Windows
+      # ---------------------------------------------------
+      #
+      # qtdatavis3d:
+      #   Required for Q3DSurface / 3D RF surface mapping.
+      #
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
@@ -57,26 +59,87 @@ jobs:
           arch: 'win64_msvc2019_64'
           modules: 'qtdatavis3d'
 
+      # ---------------------------------------------------
+      # Configure CMake using Visual Studio generator
+      # ---------------------------------------------------
+
       - name: Configure CMake
         run: cmake -S . -B build -G "Visual Studio 17 2022"
 
+      # ---------------------------------------------------
+      # Build Release executable
+      # ---------------------------------------------------
+      #
+      # Produces:
+      #   build\Release\scpi_cpp_qt_demo.exe
+      #
+
       - name: Build project
         run: cmake --build build --config Release
-  # -------------------------------------------------------
+
+      # ---------------------------------------------------
+      # Deploy Qt runtime files
+      # ---------------------------------------------------
+      #
+      # windeployqt copies required Qt DLLs/plugins next
+      # to the GUI executable so it can run on another PC.
+      #
+
+      - name: Deploy Qt runtime
+        run: |
+          mkdir package
+          copy build\Release\scpi_cpp_qt_demo.exe package\
+          windeployqt package\scpi_cpp_qt_demo.exe
+
+      # ---------------------------------------------------
+      # Package Python mock SCPI server
+      # ---------------------------------------------------
+      #
+      # PyInstaller creates:
+      #   dist\mock_scpi_server.exe
+      #
+
+      - name: Package Python mock server
+        run: |
+          pip install pyinstaller
+          pyinstaller --onefile mock\mock_scpi_server.py
+          copy dist\mock_scpi_server.exe package\
+
+      # ---------------------------------------------------
+      # Create simple Windows launcher
+      # ---------------------------------------------------
+      #
+      # Opens mock server first, then the Qt GUI.
+      # User can close the mock server console or press Ctrl+C.
+      #
+
+      - name: Create launcher
+        run: |
+          echo start mock_scpi_server.exe > package\launch_demo.bat
+          echo start scpi_cpp_qt_demo.exe >> package\launch_demo.bat
+
+      # ---------------------------------------------------
+      # Upload downloadable Windows package
+      # ---------------------------------------------------
+      #
+      # Download from:
+      # GitHub → Actions → latest run → Artifacts
+      #
+
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: scpi-cpp-instrument-demo-windows
+          path: package
+
+  # =======================================================
   # Ubuntu Build Job
-  # -------------------------------------------------------
+  # =======================================================
 
   build-ubuntu:
-
-    # GitHub-hosted Linux machine
     runs-on: ubuntu-latest
 
-    # -----------------------------------------------------
-    # Sequential build steps
-    # -----------------------------------------------------
-
     steps:
-
       # ---------------------------------------------------
       # Download repository source code
       # ---------------------------------------------------
@@ -87,19 +150,6 @@ jobs:
       # ---------------------------------------------------
       # Install compiler + Qt dependencies
       # ---------------------------------------------------
-      #
-      # cmake:
-      #   Build system generator
-      #
-      # g++:
-      #   GNU C++ compiler
-      #
-      # qt6-base-dev:
-      #   Qt Widgets / core GUI libraries
-      #
-      # qt6-datavisualization-dev:
-      #   Q3DSurface / 3D plotting module
-      #
 
       - name: Install dependencies
         run: |
@@ -115,13 +165,6 @@ jobs:
       # ---------------------------------------------------
       # Configure CMake project
       # ---------------------------------------------------
-      #
-      # -S .
-      #   Source directory
-      #
-      # -B build
-      #   Output build directory
-      #
 
       - name: Configure CMake
         run: |
@@ -130,17 +173,6 @@ jobs:
       # ---------------------------------------------------
       # Build project
       # ---------------------------------------------------
-      #
-      # Equivalent conceptually to:
-      #
-      # cmake
-      #   ↓
-      # generated build files
-      #   ↓
-      # compiler + linker
-      #   ↓
-      # executable binaries
-      #
 
       - name: Build project
         run: |
