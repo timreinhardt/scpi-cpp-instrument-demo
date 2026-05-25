@@ -1,15 +1,16 @@
 # Build Guide — SCPI C++ Instrument Demo
 
-## Mental model
 
-| Item | Analogy |
+## Build Flow
+
+| Item | Purpose |
 |---|---|
-| `CMakeLists.txt` | Recipe |
-| `cmake` | Recipe translator |
-| `Makefile` / generated build files | Kitchen instructions |
-| `cmake --build build` | Cook follows instructions |
-| Compiler/linker | Oven/tools |
-| Executable | Finished meal |
+| `CMakeLists.txt` | Project build configuration |
+| `cmake` | Generates platform build files |
+| Generated Makefiles/build files | Build instructions |
+| `cmake --build build` | Compiles and links project |
+| Compiler/linker | Produces executable binaries |
+| Executable | Final application |
 
 ---
 
