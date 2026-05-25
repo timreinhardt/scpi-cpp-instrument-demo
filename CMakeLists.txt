@@ -86,3 +86,14 @@ target_link_libraries(scpi_cpp_qt_demo PRIVATE
     Qt6::Widgets
     Qt6::DataVisualization
 )
+# =====================================================
+# Platform-specific socket libraries
+# =====================================================
+#
+# Windows sockets require linking against ws2_32.
+# macOS/Linux do not need this extra library.
+#
+if(WIN32)
+    target_link_libraries(scpi_cpp_demo PRIVATE ws2_32)
+    target_link_libraries(scpi_cpp_qt_demo PRIVATE ws2_32)
+endif()

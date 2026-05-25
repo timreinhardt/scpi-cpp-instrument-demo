@@ -18,5 +18,11 @@ public:
 private:
     std::string host_;
     int port_;
+
+#ifdef _WIN32
+    using SocketHandle = unsigned long long;
+    SocketHandle sockfd_ = ~0ULL;
+#else
     int sockfd_ = -1;
+#endif
 };
