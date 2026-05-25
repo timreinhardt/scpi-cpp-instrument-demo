@@ -3,11 +3,11 @@
 #include "FieldGrid.hpp"
 #include "HeatmapWidget.hpp"
 #include "ScpiClient.hpp"
+#include "Surface3DWidget.hpp"
 #include "TcpTransport.hpp"
 #include "TraceData.hpp"
 #include "TraceWidget.hpp"
 
-#include <QScrollArea>
 #include <QComboBox>
 #include <QCoreApplication>
 #include <QDateTime>
@@ -15,6 +15,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QTextEdit>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -37,6 +38,8 @@ void MainWindow::setupUi()
 {
     setWindowTitle("SCPI C++ Instrument Demo");
 
+    // Main window uses a scroll area so graphs/heatmaps/3D views
+    // do not force the whole window off-screen.
     auto *outerLayout = new QVBoxLayout(this);
 
     auto *scrollArea = new QScrollArea(this);
@@ -87,15 +90,18 @@ void MainWindow::setupUi()
     commandSelect_->addItem("Custom text command", "");
 
     commandInput_ = new QLineEdit("*IDN?");
+
     sendButton_ = new QPushButton("Send Command");
+    clearButton_ = new QPushButton("Clear Visuals");
 
     layout->addWidget(new QLabel("SCPI Command"));
     layout->addWidget(commandSelect_);
     layout->addWidget(commandInput_);
     layout->addWidget(sendButton_);
+    layout->addWidget(clearButton_);
 
     // -----------------------------------------------------
-    // Live trace controls
+    // Live acquisition controls
     // -----------------------------------------------------
 
     startLiveButton_ = new QPushButton("Start Live Acquisition");
@@ -108,7 +114,7 @@ void MainWindow::setupUi()
     layout->addWidget(stopLiveButton_);
 
     // -----------------------------------------------------
-    // Trace graph
+    // 1D trace graph
     // -----------------------------------------------------
 
     traceGraphLabel_ = new QLabel("Trace Graph");
@@ -121,7 +127,7 @@ void MainWindow::setupUi()
     layout->addWidget(traceWidget_);
 
     // -----------------------------------------------------
-    // Field heatmap
+    // 2D field heatmap
     // -----------------------------------------------------
 
     heatmapLabel_ = new QLabel("Field Heatmap");
@@ -132,6 +138,19 @@ void MainWindow::setupUi()
 
     layout->addWidget(heatmapLabel_);
     layout->addWidget(heatmapWidget_);
+
+    // -----------------------------------------------------
+    // 3D field surface
+    // -----------------------------------------------------
+
+    surface3DLabel_ = new QLabel("3D Field Surface");
+    surface3DWidget_ = new Surface3DWidget();
+
+    surface3DLabel_->hide();
+    surface3DWidget_->hide();
+
+    layout->addWidget(surface3DLabel_);
+    layout->addWidget(surface3DWidget_);
 
     // -----------------------------------------------------
     // Response and debug output
@@ -169,6 +188,9 @@ void MainWindow::connectSignals()
 
     connect(sendButton_, &QPushButton::clicked,
             this, &MainWindow::sendScpiCommand);
+
+    connect(clearButton_, &QPushButton::clicked,
+            this, &MainWindow::clearVisuals);
 
     connect(startLiveButton_, &QPushButton::clicked,
             this, &MainWindow::startLiveTrace);
@@ -240,6 +262,8 @@ void MainWindow::updateConnectionState(bool connected)
     disconnectButton_->setEnabled(connected);
 
     sendButton_->setEnabled(connected);
+    clearButton_->setEnabled(true);
+
     startLiveButton_->setEnabled(connected);
     stopLiveButton_->setEnabled(false);
 
@@ -321,6 +345,10 @@ void MainWindow::sendScpiCommand()
             heatmapWidget_->show();
             heatmapWidget_->setGridData(grid);
 
+            surface3DLabel_->show();
+            surface3DWidget_->show();
+            surface3DWidget_->setGridData(grid);
+
             responseBox_->setText(
                 QString("Field Grid Summary\nRows: %1\nColumns: %2")
                     .arg(fieldGridRows(grid))
@@ -354,11 +382,55 @@ void MainWindow::sendScpiCommand()
     }
 }
 
+void MainWindow::clearVisuals()
+{
+    logToConsole("----------------------------------------");
+    logToConsole("Clearing visual widgets");
+
+    if (traceWidget_)
+    {
+        traceWidget_->setTraceData({});
+        traceWidget_->hide();
+    }
+
+    if (traceGraphLabel_)
+    {
+        traceGraphLabel_->hide();
+    }
+
+    if (heatmapWidget_)
+    {
+        heatmapWidget_->setGridData({});
+        heatmapWidget_->hide();
+    }
+
+    if (heatmapLabel_)
+    {
+        heatmapLabel_->hide();
+    }
+
+    if (surface3DWidget_)
+    {
+        surface3DWidget_->clear();
+        surface3DWidget_->hide();
+    }
+
+    if (surface3DLabel_)
+    {
+        surface3DLabel_->hide();
+    }
+
+    if (responseBox_)
+    {
+        responseBox_->clear();
+    }
+}
+
 void MainWindow::startLiveTrace()
 {
     if (!client_)
     {
-        logToConsole("ERROR: Cannot start live trace while disconnected");
+        logToConsole("ERROR: Cannot start live acquisition while disconnected");
         responseBox_->setText("ERROR: Not connected");
         return;
     }
@@ -411,7 +483,7 @@ void MainWindow::pollTraceData()
         traceWidget_->setTraceData(values);
 
         // -------------------------------------------------
-        // Poll 2D field grid / heatmap
+        // Poll 2D field grid
         // -------------------------------------------------
 
         std::string gridResponse = client_->query(":FIELD:GRID?");
@@ -421,6 +493,10 @@ void MainWindow::pollTraceData()
         heatmapLabel_->show();
         heatmapWidget_->show();
         heatmapWidget_->setGridData(grid);
+
+        surface3DLabel_->show();
+        surface3DWidget_->show();
+        surface3DWidget_->setGridData(grid);
 
         // -------------------------------------------------
         // Human-readable status output
