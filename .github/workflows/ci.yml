@@ -1,28 +1,124 @@
+# =========================================================
+# GitHub Actions CI Workflow
+# =========================================================
+#
+# This workflow automatically builds the project
+# whenever code is pushed to GitHub.
+#
+# CI = Continuous Integration
+#
+# GitHub creates a temporary Ubuntu machine,
+# installs dependencies, downloads the repo,
+# configures CMake, then builds the project.
+#
+# File extension:
+#   .yml = YAML configuration format
+#
+# =========================================================
+
+# Workflow name shown in GitHub Actions UI
 name: CMake Qt CI
 
+# =========================================================
+# When should this workflow run?
+# =========================================================
+
 on:
+
+  # Run when code is pushed to main branch
   push:
     branches: [ main ]
+
+  # Also run for pull requests targeting main
   pull_request:
     branches: [ main ]
 
+# =========================================================
+# Jobs
+# =========================================================
+
 jobs:
+
+  # -------------------------------------------------------
+  # Ubuntu Build Job
+  # -------------------------------------------------------
+
   build-ubuntu:
+
+    # GitHub-hosted Linux machine
     runs-on: ubuntu-latest
 
+    # -----------------------------------------------------
+    # Sequential build steps
+    # -----------------------------------------------------
+
     steps:
-      - name: Checkout repo
+
+      # ---------------------------------------------------
+      # Download repository source code
+      # ---------------------------------------------------
+
+      - name: Checkout repository
         uses: actions/checkout@v4
+
+      # ---------------------------------------------------
+      # Install compiler + Qt dependencies
+      # ---------------------------------------------------
+      #
+      # cmake:
+      #   Build system generator
+      #
+      # g++:
+      #   GNU C++ compiler
+      #
+      # qt6-base-dev:
+      #   Qt Widgets / core GUI libraries
+      #
+      # qt6-datavisualization-dev:
+      #   Q3DSurface / 3D plotting module
+      #
 
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y cmake g++ qt6-base-dev qt6-datavisualization-dev
 
-      - name: Configure
+          sudo apt install -y \
+            cmake \
+            g++ \
+            qt6-base-dev \
+            qt6-declarative-dev \
+            qt6-datavisualization-dev
+
+      # ---------------------------------------------------
+      # Configure CMake project
+      # ---------------------------------------------------
+      #
+      # -S .
+      #   Source directory
+      #
+      # -B build
+      #   Output build directory
+      #
+
+      - name: Configure CMake
         run: |
           cmake -S . -B build
 
-      - name: Build
+      # ---------------------------------------------------
+      # Build project
+      # ---------------------------------------------------
+      #
+      # Equivalent conceptually to:
+      #
+      # cmake
+      #   ↓
+      # generated build files
+      #   ↓
+      # compiler + linker
+      #   ↓
+      # executable binaries
+      #
+
+      - name: Build project
         run: |
           cmake --build build
