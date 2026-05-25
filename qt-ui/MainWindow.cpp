@@ -7,6 +7,7 @@
 #include "TraceData.hpp"
 #include "TraceWidget.hpp"
 
+#include <QScrollArea>
 #include <QComboBox>
 #include <QCoreApplication>
 #include <QDateTime>
@@ -36,7 +37,16 @@ void MainWindow::setupUi()
 {
     setWindowTitle("SCPI C++ Instrument Demo");
 
-    auto *layout = new QVBoxLayout(this);
+    auto *outerLayout = new QVBoxLayout(this);
+
+    auto *scrollArea = new QScrollArea(this);
+    scrollArea->setWidgetResizable(true);
+
+    auto *contentWidget = new QWidget();
+    auto *layout = new QVBoxLayout(contentWidget);
+
+    scrollArea->setWidget(contentWidget);
+    outerLayout->addWidget(scrollArea);
 
     // -----------------------------------------------------
     // Connection controls
@@ -142,7 +152,8 @@ void MainWindow::setupUi()
 
     updateConnectionState(false);
 
-    resize(760, 900);
+    resize(900, 700);
+    setMinimumSize(700, 500);
 }
 
 void MainWindow::connectSignals()

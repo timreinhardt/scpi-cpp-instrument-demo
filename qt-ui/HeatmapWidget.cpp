@@ -10,7 +10,7 @@
 HeatmapWidget::HeatmapWidget(QWidget *parent)
     : QWidget(parent)
 {
-    setMinimumHeight(300);
+    setMinimumHeight(220);
 }
 
 void HeatmapWidget::setGridData(const FieldGrid& grid)
